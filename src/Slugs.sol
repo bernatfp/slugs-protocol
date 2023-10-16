@@ -35,6 +35,8 @@ contract Slugs is ERC721Enumerable, Ownable, Pausable {
     bytes constant CHARSET = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"; // 58 chars
     uint256 constant MAX_FEE = 10000;
 
+    uint256[9] private PRICES = [0 ether, 1 ether, 0.5 ether, 0.25 ether, 0.1 ether, 0.05 ether, 0.03 ether, 0.02 ether, 0.01 ether];
+
     constructor()
         ERC721(
             "Slugs", // Name of token
@@ -82,8 +84,7 @@ contract Slugs is ERC721Enumerable, Ownable, Pausable {
         if (bytes(slug).length == 0) {
             slug = generateAvailableSlug();
             isCustom = false;
-
-            // Custom slug
+        // Custom slug
         } else {
             isCustom = true;
             handleCustomSlugPayment(slug, referrer);
@@ -163,22 +164,24 @@ contract Slugs is ERC721Enumerable, Ownable, Pausable {
     function incrementSlug(string memory slug) private pure returns (string memory) {
         bytes memory b = bytes(slug);
         for (uint8 i = 7; i >= 0; i--) {
-            if (b[i] != CHARSET[58]) {
-                b[i] = CHARSET[uint8(b[i]) + 1];
+            if (b[i] != CHARSET[57]) {
+                b[i] = getNextChar(b[i]);
                 return string(b);
+            } else {
+                b[i] = CHARSET[0]; // Reset to the first character in the CHARSET
             }
         }
-        return "00000000";
+        return "00000000";  // This will only be hit if all characters in the slug are the last character in CHARSET.
     }
 
-    function isValidSlug(string memory slug) private pure returns (bool) {
-        bytes memory b = bytes(slug);
-        for (uint256 i = 0; i < b.length; i++) {
-            if (b[i] < "0" || (b[i] > "9" && b[i] < "A") || (b[i] > "Z" && b[i] < "a") || b[i] > "z") {
-                return false;
+    function getNextChar(bytes1 char) private pure returns (bytes1) {
+        for (uint8 i = 0; i < 57; i++) {
+            if (CHARSET[i] == char) {
+                return CHARSET[i + 1];
             }
         }
-        return true;
+        // If provided with the last character in the CHARSET, just return it.
+        return char;
     }
 
     function handleCustomSlugPayment(string memory slug, address referrer) private {
@@ -239,16 +242,11 @@ contract Slugs is ERC721Enumerable, Ownable, Pausable {
      * @param slugLength The length of the slug.
      * @return Returns the cost of the slug in ether.
      */
-    function getSlugCost(uint256 slugLength) public pure returns (uint256) {
-        if (slugLength == 0) return 0 ether;
-        if (slugLength == 1) return 1 ether;
-        if (slugLength == 2) return 0.5 ether;
-        if (slugLength == 3) return 0.25 ether;
-        if (slugLength == 4) return 0.1 ether;
-        if (slugLength == 5) return 0.05 ether;
-        if (slugLength == 6) return 0.03 ether;
-        if (slugLength == 7) return 0.02 ether;
-        return 0.01 ether;
+    function getSlugCost(uint256 slugLength) public view returns (uint256) {
+        if (slugLength >= PRICES.length) {
+            return PRICES[PRICES.length - 1];
+        }
+        return PRICES[slugLength];
     }
 
     /**
@@ -337,14 +335,12 @@ contract Slugs is ERC721Enumerable, Ownable, Pausable {
         IERC20 erc20Token = IERC20(token);
         uint256 balance = erc20Token.balanceOf(address(this));
         require(balance > 0, "No token balance in the contract");
-        erc20Token.approve(owner(), type(uint256).max); // Add infinite approve before transferring
         erc20Token.transfer(owner(), balance);
     }
 
     function rescueERC721(address token, uint256 tokenId) external onlyOwner {
         IERC721 erc721Token = IERC721(token);
         require(erc721Token.ownerOf(tokenId) == address(this), "The token is not owned by the contract");
-        erc721Token.setApprovalForAll(owner(), true); // Add infinite approve before transferring
         erc721Token.safeTransferFrom(address(this), owner(), tokenId);
     }
 

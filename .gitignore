@@ -14,6 +14,6 @@ out/
 .mnemonic
 
 # Others
-remappings.txt
 svg_example.xml
 internal_notes.md
+.DS_Store

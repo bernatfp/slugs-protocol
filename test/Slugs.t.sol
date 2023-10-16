@@ -199,4 +199,34 @@ contract SlugsTest is Test {
         // Referrer fees should match balance delta
         assertEq(referrerFees, address(referrer).balance - initialReferrerBalance);
     }
+
+    function testFail_editWithEmptyURL() public {
+        slugs.mintSlug(testUrl, vanitySlug, address(1));
+        slugs.editUrl(slugs.getTokenId(vanitySlug), "");
+    }
+
+    function testFail_mintWithInsufficientAmount() public {
+        slugs.mintSlug{value: 0.5 ether}(testUrl, "a", address(1));
+    }
+
+    function test_transferSlugOwnership() public {
+        uint256 slugCost = slugs.getSlugCost(bytes(vanitySlug).length);
+        slugs.mintSlug{value: slugCost}(testUrl, vanitySlug, address(1));
+        address bob = makeAddr("bob");
+        slugs.transferFrom(address(this), bob, slugs.getTokenId(vanitySlug));
+        assertEq(slugs.ownerOf(slugs.getTokenId(vanitySlug)), bob);
+    }
+
+    function testFail_transferSlugNotOwned() public {
+        address alice = makeAddr("alice");
+        address bob = makeAddr("bob");
+        vm.startPrank(alice);
+        uint256 slugCost = slugs.getSlugCost(bytes(vanitySlug).length);
+        slugs.mintSlug{value: slugCost}(testUrl, vanitySlug, address(1));
+        vm.stopPrank();
+        vm.startPrank(bob);
+        slugs.transferFrom(bob, makeAddr("charlie"), slugs.getTokenId(vanitySlug));
+        vm.stopPrank();
+    }
+
 }
