@@ -45,7 +45,7 @@ Dive into the `/src` directory for comprehensive contract documentation and sour
 ### Deployments 
 
 - **Optimism Goerli**: [0x22Bc6b70f99bfB92104f0B83dCd436A0B5676666](https://goerli-optimism.etherscan.io/address/0x22Bc6b70f99bfB92104f0B83dCd436A0B5676666)
-- **Optimism Mainnet**: TBD
+- **Optimism Mainnet**: [0x48fbF0b7E6bDaA9d7452FEB34507b2bdDb148E54](https://optimistic.etherscan.io/address/0x48fbf0b7e6bdaa9d7452feb34507b2bddb148e54)
 
 ### Disclaimers & caveats
 
